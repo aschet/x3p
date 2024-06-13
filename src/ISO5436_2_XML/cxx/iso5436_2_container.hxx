@@ -43,6 +43,7 @@
 #include <opengps/cxx/string.hxx>
 #include <opengps/cxx/iso5436_2_xsd.hxx>
 #include <zip.h>
+#include <filesystem>
 
 namespace OpenGPS
 {
@@ -74,8 +75,8 @@ namespace OpenGPS
 		 * relatively large space from your storage media.
 		 */
 		ISO5436_2Container(
-			const String& file,
-			const String& temp);
+			const std::filesystem::path& file,
+			const std::filesystem::path& temp);
 
 		/*! Destroys this instance. This closes all open file handles and all
 		changes you may have made to an X3P document get lost unless you
@@ -155,8 +156,8 @@ namespace OpenGPS
 
 		void Close();
 
-		void AppendVendorSpecific(const String& vendorURI, const String& filePath);
-		bool GetVendorSpecific(const String& vendorURI, const String& fileName, const String& targetPath);
+		void AppendVendorSpecific(const String& vendorURI, const std::filesystem::path& filePath);
+		bool GetVendorSpecific(const String& vendorURI, const std::filesystem::path& fileName, const std::filesystem::path& targetPath);
 
 	protected:
 
@@ -214,40 +215,40 @@ namespace OpenGPS
 		size_t GetMaxW() const;
 
 		/*! Gets the file path to the X3P archive the current instance is an interface for. */
-		const String& GetFilePath() const;
+		const std::filesystem::path& GetFilePath() const;
 
 		/*! Gets the absolute file path to the X3P archive the current instance is an interface for. */
-		String GetFullFilePath() const;
+		std::filesystem::path GetFullFilePath() const;
 
 		/*! Gets the full path to the directory where temporary files get stored. */
-		const String& GetTempDir() const;
+		const std::filesystem::path& GetTempDir() const;
 
 		/*! Creates a unique temporary file name. */
-		String CreateContainerTempFilePath() const;
+		std::filesystem::path CreateContainerTempFilePath() const;
 
 		/*! Gets the relative path of the main xml document file within the zip archive. */
-		String GetMainArchiveName() const;
+		std::filesystem::path GetMainArchiveName() const;
 
 		/*! Gets the full path to the temporaryily decompressed main xml document file. */
-		String GetMainFileName() const;
+		std::filesystem::path GetMainFileName() const;
 
 		/*! Gets the relative path of the binary point data file within the zip archive. */
-		String GetPointDataArchiveName() const;
+		std::filesystem::path GetPointDataArchiveName() const;
 
 		/*! Gets the full path to the temporaryily decompressed binary point data file. */
-		String GetPointDataFileName();
+		std::filesystem::path GetPointDataFileName();
 
 		/*! Gets the relative path of the binary point validity data file within the zip archive. */
-		String GetValidPointsArchiveName() const;
+		std::filesystem::path GetValidPointsArchiveName() const;
 
 		/*! Gets the full path to the temporaryily decompressed binary point validity data file. */
-		String GetValidPointsFileName();
+		std::filesystem::path GetValidPointsFileName();
 
 		/*! Gets the relative path of the md5 checksum file within the zip archive. */
-		String GetChecksumArchiveName() const;
+		std::filesystem::path GetChecksumArchiveName() const;
 
 		/*! Gets the full path to the temporaryily decompressed md5 checksum file. */
-		String GetChecksumFileName() const;
+		std::filesystem::path GetChecksumFileName() const;
 
 		/*!
 		 * Decompresses and verifies the current X3P archive.
@@ -267,7 +268,7 @@ namespace OpenGPS
 		 * @returns Returns false if a file could not be found in the archive (see the discussion above),
 		 * true in all other cases.
 		 */
-		bool Decompress(const String& src, const String& dst, bool fileNotFoundAllowed = false) const;
+		bool Decompress(const std::filesystem::path& src, const std::filesystem::path& dst, bool fileNotFoundAllowed = false) const;
 
 		/*!
 		 * Decompresses the main xml document contained within the X3P archive.
@@ -459,13 +460,13 @@ namespace OpenGPS
 
 	private:
 		/*! The path of the X3P archive handles. */
-		String m_FilePath;
+		std::filesystem::path m_FilePath;
 
 		/*! The path to a temporary directory unique to the current instance. */
-		String m_TempPath;
+		std::filesystem::path m_TempPath;
 
 		/*! The path to the global directory for temporary files. */
-		String m_TempBasePath;
+		std::filesystem::path m_TempBasePath;
 
 		/*! true if an X3P archive is to be created, false if an existing archive has been opened.
 		 * The value is undefined if nothing happened so far.
@@ -473,10 +474,10 @@ namespace OpenGPS
 		bool m_IsCreating{};
 
 		/*! The temporary target path of the uncompressed binary point data file. */
-		String m_PointDataFileName;
+		std::filesystem::path m_PointDataFileName;
 
 		/*! The temporary target path of the uncompressed binary point validity data file. */
-		String m_ValidPointsFileName;
+		std::filesystem::path m_ValidPointsFileName;
 
 		/*! The level of compression of the zip archive. */
 		int m_CompressionLevel;
@@ -517,10 +518,8 @@ namespace OpenGPS
 		/*! ID of vendorspecific data or empty. @see ISO5436_2Container::m_VendorSpecific. */
 		String m_VendorURI;
 
-		typedef std::vector<String> StringList;
-
 		/*! Vendorspecific file names to be added to the container registered with one single vendor id. @see ISO5436_2Container::m_VendorURI */
-		StringList m_VendorSpecific;
+		std::vector<std::filesystem::path> m_VendorSpecific;
 
 		/*!
 		 * Writes vendorspecific files to the zip container if any.
@@ -550,7 +549,7 @@ namespace OpenGPS
 		 * @param size The size of the checksum buffer in bytes. This must be equal to 16 always as it is a 128bit md5 sum.
 		 * @returns Returns true when the checksum could be verified, false otherwise.
 		 */
-		bool VerifyChecksum(const String& filePath, const unsigned char* checksum, size_t size) const;
+		bool VerifyChecksum(const std::filesystem::path& filePath, const unsigned char* checksum, size_t size) const;
 
 		/*!
 		 * Verifies an 128bit md5 checksum.
@@ -558,7 +557,7 @@ namespace OpenGPS
 		 * @param checksum The expected checksum to verify.
 		 * @returns Returns true when the checksum could be verified, false otherwise.
 		 */
-		bool VerifyChecksum(const String& filePath, std::array<unsigned char, 16>& checksum) const;
+		bool VerifyChecksum(const std::filesystem::path& filePath, std::array<unsigned char, 16>& checksum) const;
 
 		/*!
 		 * Verifies the checksum of the main document ISO5436-2 XML file.
@@ -607,7 +606,7 @@ namespace OpenGPS
 		 * @param checksum Target of the extracted checksum.
 		 * @returns Returns true on success, false otherwise.
 		 */
-		bool ReadMd5FromFile(const String& fileName, std::array<unsigned char, 16>& checksum) const;
+		bool ReadMd5FromFile(const std::filesystem::path& fileName, std::array<unsigned char, 16>& checksum) const;
 
 		/*!
 		 * Extracts the three components of a point vector.
