@@ -35,7 +35,7 @@
 
 #include "stdafx.hxx"
 
-BinaryPointVectorReaderContext::BinaryPointVectorReaderContext(const String& filePath)
+BinaryPointVectorReaderContext::BinaryPointVectorReaderContext(const std::filesystem::path& filePath)
 	:m_Stream{ std::make_unique<InputBinaryFileStream>(filePath) }
 {
 }

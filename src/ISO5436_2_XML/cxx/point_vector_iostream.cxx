@@ -67,18 +67,16 @@ PointVectorOutputStringStream::PointVectorOutputStringStream()
 	imbue(m_Locale);
 }
 
-InputBinaryFileStream::InputBinaryFileStream(const String& filePath)
+InputBinaryFileStream::InputBinaryFileStream(const std::filesystem::path& filePath)
 {
 	imbue(m_Locale);
 
-	String buf(filePath);
-	open(buf.ToChar(), std::ios_base::in | std::ios_base::binary);
+	open(filePath, std::ios_base::in | std::ios_base::binary);
 }
 
-OutputBinaryFileStream::OutputBinaryFileStream(const String& filePath)
+OutputBinaryFileStream::OutputBinaryFileStream(const std::filesystem::path& filePath)
 {
 	imbue(m_Locale);
 
-	String buf(filePath);
-	open(buf.ToChar(), std::ios_base::out | std::ios_base::binary);
+	open(filePath, std::ios_base::out | std::ios_base::binary);
 }
