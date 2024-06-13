@@ -46,6 +46,7 @@
 #include <opengps/cxx/exceptions.hxx>
 #include <opengps/cxx/point_iterator.hxx>
 #include <memory>
+#include <filesystem>
 
 namespace OpenGPS
 {
@@ -96,8 +97,8 @@ namespace OpenGPS
 		* @param temp Specifies a new absolute path to the directory where unpacked X3P data gets stored temporarily.
 		*/
 		ISO5436_2(
-			const String& file,
-			const String& temp);
+			const std::filesystem::path& file,
+			const std::filesystem::path& temp);
 
 		/*!
 		* Creates a new instance.
@@ -107,7 +108,7 @@ namespace OpenGPS
 		* @param file Full path to the ISO5436-2 XML X3P to operate on. This file does not need to exist.
 		*/
 		ISO5436_2(
-			const String& file);
+			const std::filesystem::path& file);
 
 		/*!
 		* Opens an existing ISO5436-2 XML X3P file.
@@ -439,7 +440,7 @@ namespace OpenGPS
 		 * @param vendorURI Your very own vendor specifier in a URI conformant format.
 		 * @param filePath The absolute path to the file to be added to the document container.
 		 */
-		void AppendVendorSpecific(const String& vendorURI, const String& filePath);
+		void AppendVendorSpecific(const String& vendorURI, const std::filesystem::path& filePath);
 
 		/*!
 		 * Extracts vendorspecific data from the current archive to a given file location.
@@ -454,7 +455,7 @@ namespace OpenGPS
 		 * @param targetPath The file in the archive will get extracted here.
 		 * @retval false if there is no file registered for the given vendorURI within the archive, true if the file has been found and extracted.
 		 */
-		bool GetVendorSpecific(const String& vendorURI, const String& fileName, const String& targetPath);
+		bool GetVendorSpecific(const String& vendorURI, const std::filesystem::path& fileName, const std::filesystem::path& targetPath);
 
 	private:
 		/*! Internal object instance. Either "this" or ISO5436_2::ISO5436_2Container instance. */

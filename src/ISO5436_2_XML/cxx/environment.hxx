@@ -38,6 +38,7 @@
 
 #include <opengps/cxx/opengps.hxx>
 #include <memory>
+#include <filesystem>
 
 namespace OpenGPS
 {
@@ -74,84 +75,9 @@ namespace OpenGPS
 		static void Reset();
 
 		/*!
-		 * E.g. gets the backslash on Microsoft Windows systems.
-		 */
-		virtual OGPS_Character GetDirectorySeparator() const = 0;
-
-		/*!
-		 * E.g. gets the forward slash on Microsoft Windows systems.
-		 */
-		virtual OGPS_Character GetAltDirectorySeparator() const = 0;
-
-		/*!
-		 * Converts a given path to a normalized version suitable for the current operating system.
-		 *
-		 * @param path A path name.
-		 * @param clean_path Gets a normalized path name as the result.
-		 * @returns Returns true on success, false otherwise.
-		 */
-		virtual bool GetPathName(const String& path, String& clean_path) const = 0;
-
-		/*!
-		 * Gets the file name including its extension from a full path.
-		 *
-		 * @param The full path of a file.
-		 * @returns Returns just the filename.
-		 */
-		virtual String GetFileName(const String& path) const = 0;
-
-		/*!
-		 * Concatenates two distinct path names.
-		 *
-		 * @param path1 The first part of the path.
-		 * @param path2 The second part of the path.
-		 * @returns Returns the concatenated path name or an empty string on error.
-		 */
-		virtual String ConcatPathes(const String& path1, const String& path2) const = 0;
-
-		/*!
-		 * Returns true if a given path exists, false otherwise.
-		 * @param file The path to check.
-		 */
-		virtual bool PathExists(const String& file) const = 0;
-
-		/*!
-		 * Deletes a given file.
-		 * @param file The path to the file to be erased.
-		 */
-		virtual bool RemoveFile(const String& file) const = 0;
-
-		/*!
 		 * Gets a random sequence of numeric characters.
 		 */
-		virtual String GetUniqueName() const = 0;
-
-		/*!
-		 * Makes a directory.
-		 * @param path The directory to be created.
-		 * @returns Returns true on success, false otherwise.
-		 */
-		virtual bool CreateDir(const String& path) const = 0;
-
-		/*!
-		 * Deletes a given directory.
-		 * @param path The path to the directory to be erased.
-		 */
-		virtual bool RemoveDir(const String& path) const = 0;
-
-		/*!
-		 * Returns the path to the temporary directory or an empty string on error.
-		 */
-		virtual String GetTempDir() const = 0;
-
-		/*!
-		 * Renames a file.
-		 *
-		 * @param src The path to the file to be renamed.
-		 * @param dst The new path of the renamed file.
-		 * @returns Returns true on success, false otherwise.
-		 */
-		virtual bool RenameFile(const String& src, const String& dst) const = 0;
+		virtual std::filesystem::path GetUniqueName() const = 0;
 
 		/*!
 		 * Gets the value of a named environment variable.

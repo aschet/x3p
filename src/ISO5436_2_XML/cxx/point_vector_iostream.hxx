@@ -44,6 +44,7 @@
 #endif
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 
 namespace OpenGPS
 {
@@ -133,7 +134,7 @@ namespace OpenGPS
 		 * Creates a new instance.
 		 * @param filePath Full path to the binary file to be read.
 		 */
-		InputBinaryFileStream(const String& filePath);
+		InputBinaryFileStream(const std::filesystem::path& filePath);
 
 	private:
 		/*! Invariant locale. */
@@ -148,7 +149,7 @@ namespace OpenGPS
 		 * Creates a new instance.
 		 * @param filePath Full path to the binary file to be written.
 		 */
-		OutputBinaryFileStream(const String& filePath);
+		OutputBinaryFileStream(const std::filesystem::path& filePath);
 
 	private:
 		/*! Invariant locale. */

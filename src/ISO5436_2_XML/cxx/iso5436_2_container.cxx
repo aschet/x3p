@@ -140,8 +140,8 @@ static inline size_t SafeMultipilcation(unsigned long long value1, unsigned long
 }
 
 ISO5436_2Container::ISO5436_2Container(
-	const String& file,
-	const String& temp)
+	const std::filesystem::path& file,
+	const std::filesystem::path& temp)
 	:m_FilePath { file },
 	m_TempPath{ temp },
 	m_CompressionLevel { Z_DEFAULT_COMPRESSION }
@@ -201,19 +201,18 @@ void ISO5436_2Container::Decompress()
 	DecompressDataBin();
 }
 
-bool ISO5436_2Container::VerifyChecksum(const String& filePath, const unsigned char* checksum, size_t size) const
+bool ISO5436_2Container::VerifyChecksum(const std::filesystem::path& filePath, const unsigned char* checksum, size_t size) const
 {
-	assert(filePath.size() > 0);
+	assert(!filePath.empty());
 
 	if (!checksum || size != 16)
 	{
 		return false;
 	}
 
-	String filePathBuffer(filePath);
 	std::array<unsigned char, 16> md5{};
 
-	if (!md5_file(filePathBuffer.ToChar(), md5.data()))
+	if (!md5_file(filePath.string().c_str(), md5.data()))
 	{
 		for (size_t n = 0; n < md5.size(); ++n)
 		{
@@ -229,7 +228,7 @@ bool ISO5436_2Container::VerifyChecksum(const String& filePath, const unsigned c
 	return false;
 }
 
-bool ISO5436_2Container::VerifyChecksum(const String& filePath, std::array<unsigned char, 16>& checksum) const
+bool ISO5436_2Container::VerifyChecksum(const std::filesystem::path& filePath, std::array<unsigned char, 16>& checksum) const
 {
 	return VerifyChecksum(filePath, checksum.data(), checksum.size());
 }
@@ -286,17 +285,12 @@ void ISO5436_2Container::VerifyValidBinChecksum()
 	m_ValidBinChecksum = false;
 }
 
-bool ISO5436_2Container::ReadMd5FromFile(const String& fileName, std::array<unsigned char, 16>& checksum) const
+bool ISO5436_2Container::ReadMd5FromFile(const std::filesystem::path& fileName, std::array<unsigned char, 16>& checksum) const
 {
 #ifdef _UNICODE
-#if !_WIN32
-	String tempFileName(fileName);
-	std::wifstream file(tempFileName.ToChar());
+	std::wifstream file(fileName);
 #else
-	std::wifstream file(fileName.c_str());
-#endif
-#else
-	std::ifstream file(fileName.c_str());
+	std::ifstream file(fileName);
 #endif
 
 	String md5;
@@ -770,87 +764,87 @@ size_t ISO5436_2Container::GetListDimension() const
 	return ConvertToSizeT(m_Document->Record3().ListDimension().get());
 }
 
-String ISO5436_2Container::CreateContainerTempFilePath() const
+std::filesystem::path ISO5436_2Container::CreateContainerTempFilePath() const
 {
 	auto env = Environment::GetInstance();
 
-	return env->ConcatPathes(GetTempDir(), env->GetUniqueName());
+	return GetTempDir() / env->GetUniqueName();
 }
 
-String ISO5436_2Container::GetFullFilePath() const
+std::filesystem::path ISO5436_2Container::GetFullFilePath() const
 {
 	// TODO
 	return m_FilePath;
 }
 
-const String& ISO5436_2Container::GetFilePath() const
+const std::filesystem::path& ISO5436_2Container::GetFilePath() const
 {
 	return m_FilePath;
 }
 
-const String& ISO5436_2Container::GetTempDir() const
+const std::filesystem::path& ISO5436_2Container::GetTempDir() const
 {
-	assert(m_TempPath.length() > 0);
+	assert(!m_TempPath.empty());
 
 	return m_TempPath;
 }
 
-String ISO5436_2Container::GetMainArchiveName() const
+std::filesystem::path ISO5436_2Container::GetMainArchiveName() const
 {
 	return _OPENGPS_XSD_ISO5436_MAIN_PATH;
 }
 
-String ISO5436_2Container::GetMainFileName() const
+std::filesystem::path ISO5436_2Container::GetMainFileName() const
 {
-	return Environment::GetInstance()->ConcatPathes(GetTempDir(), GetMainArchiveName());
+	return GetTempDir() / GetMainArchiveName();
 }
 
-String ISO5436_2Container::GetPointDataArchiveName() const
+std::filesystem::path ISO5436_2Container::GetPointDataArchiveName() const
 {
 	assert(HasDocument() && IsBinary());
 
-	return m_Document->Record3().DataLink()->PointDataLink();
+	return std::filesystem::path(m_Document->Record3().DataLink()->PointDataLink().c_str());
 }
 
-String ISO5436_2Container::GetPointDataFileName()
+std::filesystem::path ISO5436_2Container::GetPointDataFileName()
 {
 	if (m_PointDataFileName.empty())
 	{
 		auto env = Environment::GetInstance();
-		m_PointDataFileName = env->ConcatPathes(GetTempDir(), env->GetUniqueName());
+		m_PointDataFileName = GetTempDir() / env->GetUniqueName();
 	}
 
 	return m_PointDataFileName;
 }
 
-String ISO5436_2Container::GetValidPointsArchiveName() const
+std::filesystem::path ISO5436_2Container::GetValidPointsArchiveName() const
 {
 	assert(HasDocument() && IsBinary() && HasValidPointsLink());
 
-	return m_Document->Record3().DataLink()->ValidPointsLink().get();
+	return m_Document->Record3().DataLink()->ValidPointsLink().get().c_str();
 }
 
-String ISO5436_2Container::GetValidPointsFileName()
+std::filesystem::path ISO5436_2Container::GetValidPointsFileName()
 {
 	if (m_ValidPointsFileName.empty())
 	{
 		auto env = Environment::GetInstance();
-		m_ValidPointsFileName = env->ConcatPathes(GetTempDir(), env->GetUniqueName());
+		m_ValidPointsFileName =GetTempDir() / env->GetUniqueName();
 	}
 
 	return m_ValidPointsFileName;
 }
 
-String ISO5436_2Container::GetChecksumArchiveName() const
+std::filesystem::path ISO5436_2Container::GetChecksumArchiveName() const
 {
 	assert(HasDocument());
 
-	return m_Document->Record4().ChecksumFile();
+	return std::filesystem::path(m_Document->Record4().ChecksumFile().c_str());
 }
 
-String ISO5436_2Container::GetChecksumFileName() const
+std::filesystem::path ISO5436_2Container::GetChecksumFileName() const
 {
-	return Environment::GetInstance()->ConcatPathes(GetTempDir(), GetChecksumArchiveName());
+	return GetTempDir() / GetChecksumArchiveName();
 }
 
 void ISO5436_2Container::DecompressMain() const
@@ -887,10 +881,11 @@ void ISO5436_2Container::DecompressDataBin()
 	}
 }
 
-bool ISO5436_2Container::Decompress(const String& src, const String& dst, const bool fileNotFoundAllowed) const
+bool ISO5436_2Container::Decompress(const std::filesystem::path& src, const std::filesystem::path& dst, bool fileNotFoundAllowed) const
 {
-	auto filePath{ GetFullFilePath() };
-	auto handle{ unzOpen(filePath.ToChar()) };
+	const auto filePath{ GetFullFilePath() };
+	auto handle{ unzOpen(filePath.string().c_str()) };
+
 
 	if (!handle)
 	{
@@ -910,8 +905,7 @@ bool ISO5436_2Container::Decompress(const String& src, const String& dst, const 
 	try
 	{
 		// Locate the document/file to be decompressed in the archive.
-		String srcbuf(src);
-		if (unzLocateFile(handle, srcbuf.ToChar(), 2 /* case insensitive search */) == UNZ_OK)
+		if (unzLocateFile(handle, src.string().c_str(), 2 /* case insensitive search */) == UNZ_OK)
 		{
 			// Open the current file for reading.
 			if (unzOpenCurrentFile(handle) == UNZ_OK)
@@ -940,10 +934,10 @@ bool ISO5436_2Container::Decompress(const String& src, const String& dst, const 
 							auto buffer = std::make_unique<char[]>(size);
 							auto bytesCopied{ unzReadCurrentFile(handle, buffer.get(), size) };
 
-							if (bytesCopied == size)
-							{
+								if (bytesCopied == size)
+								{
 								binaryTarget.write(buffer.get(), bytesCopied);
-							}
+								}
 
 							if (bytesCopied != size || binaryTarget.fail())
 							{
@@ -1040,8 +1034,8 @@ void ISO5436_2Container::Compress()
 
 	CreateTempDir();
 
-	auto targetZip{ CreateContainerTempFilePath() };
-	auto handle{ zipOpen(targetZip.ToChar(), APPEND_STATUS_CREATE) };
+	const auto targetZip{ CreateContainerTempFilePath() };
+	auto handle{ zipOpen(targetZip.string().c_str(), APPEND_STATUS_CREATE) };
 
 	try
 	{
@@ -1070,10 +1064,10 @@ void ISO5436_2Container::Compress()
 
 		if (success)
 		{
-			if (!Environment::GetInstance()->RenameFile(targetZip, GetFullFilePath()))
-			{
-				systemErrorMessage = Environment::GetInstance()->GetLastErrorMessage();
-			}
+			std::filesystem::rename(targetZip, GetFullFilePath());
+			//{
+			//	systemErrorMessage = Environment::GetInstance()->GetLastErrorMessage();
+			//}
 		}
 	}
 	catch (...)
@@ -1194,11 +1188,11 @@ void ISO5436_2Container::ReadXmlDocument()
 			_EX_T("OpenGPS::ISO5436_2Container::ReadXmlDocument"));
 	}
 
-	String xmlFilePath = GetMainFileName();
+	const auto xmlFilePath = GetMainFileName();
 
 	try
 	{
-		m_Document = Schemas::ISO5436_2::ISO5436_2(xmlFilePath, 0, props);
+		m_Document = Schemas::ISO5436_2::ISO5436_2(xmlFilePath.wstring().c_str(), 0, props);
 	}
 	catch (const xml_schema::exception& e)
 	{
@@ -1324,9 +1318,9 @@ void ISO5436_2Container::SaveChecksumFile(zipFile handle, const std::array<unsig
 
 	bool retval{};
 
-	String section(GetChecksumArchiveName());
+	auto section{ GetChecksumArchiveName() };
 	if (zipOpenNewFileInZip(handle,
-		section.ToChar(),
+		section.string().c_str(),
 		nullptr,
 		nullptr,
 		0,
@@ -1344,11 +1338,11 @@ void ISO5436_2Container::SaveChecksumFile(zipFile handle, const std::array<unsig
 			String md5out;
 			if (md5out.ConvertFromMd5(checksum))
 			{
-				String mainArchiveName(GetMainArchiveName());
+				auto mainArchiveName{ GetMainArchiveName() };
 
 				zipOut.write(md5out.ToChar());
 				zipOut.write(" *");
-				zipOut.write(mainArchiveName.ToChar());
+				zipOut.write(mainArchiveName.string().c_str());
 				zipOut.write("\n");
 
 				retval = true;
@@ -1379,9 +1373,9 @@ void ISO5436_2Container::SaveXmlDocument(zipFile handle)
 	ConfigureNamespaceMap(map);
 
 	// Creates new file in the zip container.
-	String mainDocument(GetMainArchiveName());
+	auto mainDocument{ GetMainArchiveName() };
 	if (zipOpenNewFileInZip(handle,
-		mainDocument.ToChar(),
+		mainDocument.string().c_str(),
 		nullptr,
 		nullptr,
 		0,
@@ -1469,14 +1463,12 @@ bool ISO5436_2Container::ConfigureNamespaceMap(xml_schema::properties& props) co
 	String xsdPathBuf;
 	if (Environment::GetInstance()->GetVariable(_OPENGPS_ENV_OPENGPS_LOCATION, xsdPathBuf))
 	{
-		xsdPathBuf = Environment::GetInstance()->ConcatPathes(xsdPathBuf, _OPENGPS_ISO5436_LOCATION);
-
-		String xsdPath;
-		Environment::GetInstance()->GetPathName(xsdPathBuf, xsdPath);
-		if (xsdPath.size() > 0)
+		std::filesystem::path xsdPath = xsdPathBuf.c_str();
+		xsdPath = xsdPath / _OPENGPS_ISO5436_LOCATION;
+		if (!xsdPath.empty())
 		{
-			xsdPath = ConvertToURI(_OPENGPS_FILE_URI_PREF + xsdPath);
-			props.schema_location(_OPENGPS_XSD_ISO5436_NAMESPACE, xsdPath);
+			xsdPathBuf = ConvertToURI(_OPENGPS_FILE_URI_PREF + xsdPath.generic_wstring());
+			props.schema_location(_OPENGPS_XSD_ISO5436_NAMESPACE, xsdPathBuf);
 			return true;
 		}
 	}
@@ -1491,9 +1483,9 @@ void ISO5436_2Container::SaveValidPointsLink(zipFile handle)
 		assert(IsBinary());
 
 		// Creates new file in the zip container.
-		String section(GetValidPointsArchiveName());
+		auto section { GetValidPointsArchiveName() };
 		if (zipOpenNewFileInZip(handle,
-			section.ToChar(),
+			section.string().c_str(),
 			nullptr,
 			nullptr,
 			0,
@@ -1548,9 +1540,9 @@ void ISO5436_2Container::SavePointBuffer(zipFile handle)
 	if (isBinary)
 	{
 		// Creates new file in the zip container.
-		String section(GetPointDataArchiveName());
+		auto section { GetPointDataArchiveName() };
 		if (zipOpenNewFileInZip(handle,
-			section.ToChar(),
+			section.string().c_str(),
 			nullptr,
 			nullptr,
 			0,
@@ -1660,7 +1652,7 @@ std::unique_ptr<PointVectorReaderContext> ISO5436_2Container::CreatePointVectorR
 	{
 		// path to the source binary file
 		const auto binaryFilePath = GetPointDataFileName();
-		if (binaryFilePath.length() > 0)
+		if (!binaryFilePath.empty())
 		{
 			// find out if we are on lsb or msb
 			// hardware and create appropriate context
@@ -1781,7 +1773,7 @@ size_t ISO5436_2Container::GetPointCount() const
 
 		assert(xSize > 0 && ySize > 0 && zSize > 0);
 
-		return SafeMultipilcation(SafeMultipilcation(xSize, ySize), zSize);
+		return SafeMultipilcation(xSize * ySize, zSize);
 	}
 
 	// calculate point count of list type
@@ -1876,32 +1868,32 @@ void ISO5436_2Container::CreateTempDir()
 	assert(!HasTempDir());
 
 	const auto env{ Environment::GetInstance() };
-	const auto uniqueDirectory{ env->GetUniqueName() };
+	const std::filesystem::path uniqueDirectory{ env->GetUniqueName().c_str()};
 
-	String temp;
+	std::filesystem::path temp;
 	bool created{};
-	if (m_TempBasePath.length() > 0 && env->PathExists(m_TempBasePath))
+	if (!m_TempBasePath.empty() && std::filesystem::exists(m_TempBasePath))
 	{
-		temp = env->ConcatPathes(m_TempBasePath, uniqueDirectory);
+		temp = m_TempBasePath / uniqueDirectory;
 
 		// TODO: try new random
-		if (!env->PathExists(temp))
+		if (!std::filesystem::exists(temp))
 		{
-			created = env->CreateDir(temp);
+			created = std::filesystem::create_directories(temp);
 		}
 	}
 
 	if (!created)
 	{
-		const auto sysTemp{ env->GetTempDir() };
-		if (env->PathExists(sysTemp))
+		const auto sysTemp{ std::filesystem::temp_directory_path() };
+		if (std::filesystem::exists(sysTemp))
 		{
-			temp = env->ConcatPathes(sysTemp, uniqueDirectory);
+			temp = sysTemp / uniqueDirectory;
 
 			// TODO: try new random
-			if (!env->PathExists(temp))
+			if (!std::filesystem::exists(temp))
 			{
-				created = env->CreateDir(temp);
+				created = std::filesystem::create_directories(temp);
 			}
 		}
 	}
@@ -1924,7 +1916,7 @@ void ISO5436_2Container::CreateTempDir()
 
 bool ISO5436_2Container::HasTempDir() const
 {
-	return m_TempPath.length() > 0;
+	return !m_TempPath.empty();
 }
 
 void ISO5436_2Container::RemoveTempDir()
@@ -1934,7 +1926,7 @@ void ISO5436_2Container::RemoveTempDir()
 
 	if (HasTempDir())
 	{
-		if (Environment::GetInstance()->RemoveDir(m_TempPath))
+		if (std::filesystem::remove_all(m_TempPath))
 		{
 			m_TempPath.clear();
 		}
@@ -2049,7 +2041,7 @@ std::shared_ptr<PointVectorProxyContext> ISO5436_2Container::CreatePointVectorPr
 	{
 		const auto& mtype{ m_Document->Record3().MatrixDimension().get() };
 
-		SafeMultipilcation(SafeMultipilcation(mtype.SizeX(), mtype.SizeY()), mtype.SizeZ());
+		SafeMultipilcation(mtype.SizeX() * mtype.SizeY(), mtype.SizeZ());
 
 		const auto sx{ ConvertToSizeT(mtype.SizeX()) };
 		const auto sy{ ConvertToSizeT(mtype.SizeY()) };
@@ -2193,11 +2185,11 @@ void ISO5436_2Container::TestChecksums() const
 	}
 }
 
-void ISO5436_2Container::AppendVendorSpecific(const String& vendorURI, const String& filePath)
+void ISO5436_2Container::AppendVendorSpecific(const String& vendorURI, const std::filesystem::path& filePath)
 {
 	CheckDocumentInstance();
 
-	assert(vendorURI.size() > 0 && filePath.size() > 0);
+	assert(!vendorURI.empty() && !filePath.empty());
 	assert(m_VendorURI.empty() || m_VendorSpecific.size() > 0);
 
 	if (!m_VendorURI.empty() && m_VendorURI != vendorURI)
@@ -2217,7 +2209,7 @@ void ISO5436_2Container::AppendVendorSpecific(const String& vendorURI, const Str
 	m_VendorSpecific.push_back(filePath);
 }
 
-bool ISO5436_2Container::GetVendorSpecific(const String& vendorURI, const String& fileName, const String& targetPath)
+bool ISO5436_2Container::GetVendorSpecific(const String& vendorURI, const std::filesystem::path& fileName, const std::filesystem::path& targetPath)
 {
 	CheckDocumentInstance();
 
@@ -2280,10 +2272,10 @@ bool ISO5436_2Container::WriteVendorSpecific(zipFile handle)
 		for (size_t n = 0; n < m_VendorSpecific.size(); ++n)
 		{
 			// Creates new file in the zip container.
-			String vendor = m_VendorSpecific[n];
-			String avname = Environment::GetInstance()->GetFileName(vendor);
+			std::filesystem::path vendor = m_VendorSpecific[n];
+			std::filesystem::path avname = vendor.filename();
 			if (zipOpenNewFileInZip(handle,
-				avname.ToChar(),
+				avname.string().c_str(),
 				nullptr,
 				nullptr,
 				0,
@@ -2303,7 +2295,7 @@ bool ISO5436_2Container::WriteVendorSpecific(zipFile handle)
 					ZipStreamBuffer vbuffer(handle, false);
 					ZipOutputStream vstream(vbuffer);
 
-					std::ifstream src(vendor.ToChar(), std::ios::in | std::ios::binary | std::ios::ate);
+					std::ifstream src(vendor, std::ios::in | std::ios::binary | std::ios::ate);
 
 					if (!src.is_open())
 					{

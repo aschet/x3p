@@ -54,18 +54,7 @@ namespace OpenGPS
       /*! Destroys this instance. */
       ~Win32Environment() override;
 
-      OGPS_Character GetDirectorySeparator() const override;
-      OGPS_Character GetAltDirectorySeparator() const override;
-      bool GetPathName(const String& path, String& clean_path) const override;
-      String GetFileName(const String& path) const override;
-      String ConcatPathes(const String& path1, const String& path2) const override;
-      bool PathExists(const String& file) const override;
-      bool RemoveFile(const String& file) const override;
-      String GetUniqueName() const override;
-      bool CreateDir(const String& path) const override;
-      bool RemoveDir(const String& path) const override;
-      String GetTempDir() const override;
-      bool RenameFile(const String& src, const String& dst) const override;
+      std::filesystem::path GetUniqueName() const override;
       bool GetVariable(const String& varName, String& value) const override;
       String GetLastErrorMessage() const override;
 

@@ -291,7 +291,7 @@ static bool PrintMetaData(const OGPS_ISO5436_2Handle handle)
    *
    * @param fileName Full path to the ISO5436-2 XML X3P to write.
    */
-static void simpleExample(const OpenGPS::String& fileName)
+static void simpleExample(const std::filesystem::path& fileName)
 {
 	// Simple example where we have two incremental and one absolute axis (the z-axis).
 
@@ -347,7 +347,7 @@ static void simpleExample(const OpenGPS::String& fileName)
 
 	// Create ISO5436_2 container
 	MatrixDimensionType matrix{ 2, 2, 2 };
-	auto handle{ ogps_CreateMatrixISO5436_2(fileName.c_str(), nullptr, record1, &record2, matrix, false) };
+	auto handle{ ogps_CreateMatrixISO5436_2(fileName.wstring().c_str(), nullptr, record1, &record2, matrix, false) };
 
 	// Add data points
 	//1. Create point vector buffer for three points. 
@@ -393,13 +393,12 @@ static void simpleExample(const OpenGPS::String& fileName)
 	ogps_FreePointVector(&vector);
 
 	// Create vendorspecific data.
-	OpenGPS::String vname{ fileName.substr(0, fileName.find_last_of(_T("/\\")) + 1) };
-	vname.append(_T("vendor.tmp"));
-	std::wofstream vendor_dat(vname.ToChar(), std::ios::trunc);
+	std::filesystem::path vname{ fileName.parent_path() / "vendor.tmp" };
+	std::wofstream vendor_dat(vname, std::ios::trunc);
 	vendor_dat << _T("Vendorspecific data.") << std::endl;
 	vendor_dat.close();
 
-	ogps_AppendVendorSpecific(handle, _T("http://www.example.com/format/version1"), vname.c_str());
+	ogps_AppendVendorSpecific(handle, _T("http://www.example.com/format/version1"), vname.wstring().c_str());
 
 	PrintDimensions(handle);
 
@@ -407,7 +406,8 @@ static void simpleExample(const OpenGPS::String& fileName)
 	ogps_CloseISO5436_2(&handle);
 }
 
-static void mediumComplexExample(const OpenGPS::String& fileName)
+
+static void mediumComplexExample(const std::filesystem::path& fileName)
 {
 	// More complex example where we have three absolute axis.
 
@@ -462,7 +462,7 @@ static void mediumComplexExample(const OpenGPS::String& fileName)
 
 	// Create ISO5436_2 container
 	MatrixDimensionType matrix{ 4, 2, 2 };
-	auto handle{ ogps_CreateMatrixISO5436_2(fileName.c_str(), nullptr, record1, &record2, matrix, true) };
+	auto handle{ ogps_CreateMatrixISO5436_2(fileName.wstring().c_str(), nullptr, record1, &record2, matrix, true) };
 
 	PrintDimensions(handle);
 
@@ -508,7 +508,6 @@ static void mediumComplexExample(const OpenGPS::String& fileName)
 	// <Datum>4;2.5;4.8</Datum>
 	// </DataList>
 	
-
 	ogps_FreePointVector(&vector);
 
 	PrintDimensions(handle);
@@ -517,7 +516,7 @@ static void mediumComplexExample(const OpenGPS::String& fileName)
 	ogps_CloseISO5436_2(&handle);
 }
 
-static void mediumComplexExampleWInvalid(const OpenGPS::String& fileName)
+static void mediumComplexExampleWInvalid(const std::filesystem::path& fileName)
 {
 	// More complex example with integer encoded z-axis and invalid points
 
@@ -571,7 +570,7 @@ static void mediumComplexExampleWInvalid(const OpenGPS::String& fileName)
 	record2.Comment(comment);
 
 	MatrixDimensionType matrix{ 4, 2, 2 };
-	auto handle{ ogps_CreateMatrixISO5436_2(fileName.c_str(), nullptr, record1, &record2, matrix, true) };
+	auto handle{ ogps_CreateMatrixISO5436_2(fileName.wstring().c_str(), nullptr, record1, &record2, matrix, true) };
 
 	PrintDimensions(handle);
 
@@ -631,12 +630,12 @@ static void mediumComplexExampleWInvalid(const OpenGPS::String& fileName)
 	ogps_CloseISO5436_2(&handle);
 }
 
-static void readonlyExample(const OpenGPS::String& fileName)
+static void readonlyExample(const std::filesystem::path& fileName)
 {
 	// We want to read in some file and read its point data.
-	std::wcout << endl << endl << "readonlyExample(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "readonlyExample(\"" << fileName << "\")" << endl;
 
-	auto handle{ ogps_OpenISO5436_2(fileName.c_str(), nullptr) };
+	auto handle{ ogps_OpenISO5436_2(fileName.wstring().c_str(), nullptr) };
 
 	if (ogps_HasError())
 	{
@@ -689,7 +688,7 @@ static void readonlyExample(const OpenGPS::String& fileName)
 static void readonlyExampleMatrix(const OpenGPS::String& fileName)
 {
 	// Same as above, but here matrix format is assumed to provide indices within the output.
-	std::wcout << endl << endl << "readonlyExampleMatrix(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "readonlyExampleMatrix(\"" << fileName << "\")" << endl;
 
 	auto handle{ ogps_OpenISO5436_2(fileName.c_str(), nullptr) };
 
@@ -746,15 +745,15 @@ static void readonlyExampleMatrix(const OpenGPS::String& fileName)
 	ogps_CloseISO5436_2(&handle);
 }
 
-static void readonlyExample2(const OpenGPS::String& fileName)
+static void readonlyExample2(const std::filesystem::path& fileName)
 {
 	// We want to read in some file and read its point data. 
-	std::wcout << endl << endl << "readonlyExample2(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "readonlyExample2(\"" << fileName << "\")" << endl;
 
 	// This time reading real typed data points.
 	// With type information obtained from xml document.
 
-	auto handle{ ogps_OpenISO5436_2(fileName.c_str(), nullptr) };
+	auto handle{ ogps_OpenISO5436_2(fileName.wstring().c_str(), nullptr) };
 
 	if (ogps_HasError())
 	{
@@ -882,10 +881,10 @@ static void readonlyExample2(const OpenGPS::String& fileName)
 	ogps_CloseISO5436_2(&handle);
 }
 
-static void readonlyExample3(const OpenGPS::String& fileName)
+static void readonlyExample3(const std::filesystem::path& fileName)
 {
 	// We want to read in some file and read its point data. 
-	std::wcout << endl << endl << "readonlyExample3(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "readonlyExample3(\"" << fileName << "\")" << endl;
 	// Same as above but with C++ Interface.
 
 	OpenGPS::ISO5436_2 iso5436_2(fileName);
@@ -1022,10 +1021,10 @@ static void readonlyExample3(const OpenGPS::String& fileName)
 	iso5436_2.Close();
 }
 
-static void readonlyExample4(const OpenGPS::String& fileName)
+static void readonlyExample4(const std::filesystem::path& fileName)
 {
 	// We want to read in some file and read its point data.
-	std::wcout << endl << endl << "readonlyExample4(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "readonlyExample4(\"" << fileName << "\")" << endl;
 
 	OpenGPS::ISO5436_2 iso5436_2(fileName);
 	if (ogps_HasError())
@@ -1092,9 +1091,9 @@ static void readonlyExample4(const OpenGPS::String& fileName)
 }
 
 // Performance test using Int16 z-Data. Simple writing an unsorted points cloud. So all axis have to be absolute.
-static void performanceInt16(const OpenGPS::String& fileName, size_t dimension, bool binary)
+static void performanceInt16(const std::filesystem::path& fileName, size_t dimension, bool binary)
 {
-	std::wcout << endl << endl << "performanceInt16(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "performanceInt16(\"" << fileName << "\")" << endl;
 
 	const auto start{ clock() };
 
@@ -1151,7 +1150,7 @@ static void performanceInt16(const OpenGPS::String& fileName, size_t dimension, 
 	record2.Comment(comment);
 
 	// Create ISO5436_2 container
-	auto handle{ ogps_CreateListISO5436_2(fileName.c_str(), nullptr, record1, &record2, dimension, binary) };
+	auto handle{ ogps_CreateListISO5436_2(fileName.wstring().c_str(), nullptr, record1, &record2, dimension, binary) };
 
 	// Add data points
 	auto vector{ ogps_CreatePointVector() };
@@ -1184,9 +1183,9 @@ static void performanceInt16(const OpenGPS::String& fileName, size_t dimension, 
 		<< " seconds." << std::endl;
 }
 
-static void performanceDouble(OpenGPS::String fileName, size_t dimension, bool binary)
+static void performanceDouble(const std::filesystem::path& fileName, size_t dimension, bool binary)
 {
-	std::wcout << endl << endl << "performanceDouble(\"" << fileName.c_str() << "\")" << endl;
+	std::wcout << endl << endl << "performanceDouble(\"" << fileName << "\")" << endl;
 
 	const auto start{ clock() };
 
@@ -1247,7 +1246,7 @@ static void performanceDouble(OpenGPS::String fileName, size_t dimension, bool b
 	OpenGPS::Schemas::ISO5436_2::MatrixDimensionType mdim{ dimension, 1, 1 };
 
 	// Create ISO5436_2 container
-	auto handle{ ogps_CreateMatrixISO5436_2(fileName.c_str(), nullptr, record1, &record2, mdim, binary) };
+	auto handle{ ogps_CreateMatrixISO5436_2(fileName.wstring().c_str(), nullptr, record1, &record2, mdim, binary) };
 
 	// Add data points
 
@@ -1284,15 +1283,15 @@ static void performanceDouble(OpenGPS::String fileName, size_t dimension, bool b
 }
 
 // Converts a given X3P file either to binary or text format (if dstFormatIsBinary parameter equals false).
-static void convertFormat(const OpenGPS::String& srcFileName, const OpenGPS::String& dstFileName, bool dstFormatIsBinary)
+static void convertFormat(const std::filesystem::path& srcFileName, const std::filesystem::path& dstFileName, bool dstFormatIsBinary)
 {
-	std::wcout << endl << endl << "convertFormat(\"" << srcFileName.c_str() << "\") to \"" << dstFileName.c_str() << "\"" << endl;
+	std::wcout << endl << endl << "convertFormat(\"" << srcFileName << "\") to \"" << dstFileName << "\"" << endl;
 	// We want to read in some file regardless whether it was written
 	// in text or binary format and then copy its contents into
 	// a newly created file to ensure binary format of X3P.
 	// The original file will be overwritten! 
 
-	auto src_handle{ ogps_OpenISO5436_2(srcFileName.c_str(), nullptr) };
+	auto src_handle{ ogps_OpenISO5436_2(srcFileName.wstring().c_str(), nullptr) };
 
 	if (!src_handle)
 		return;
@@ -1306,11 +1305,11 @@ static void convertFormat(const OpenGPS::String& srcFileName, const OpenGPS::Str
 	OGPS_ISO5436_2Handle dst_handle{};
 	if (ogps_IsMatrix(src_handle) && !ogps_HasError())
 	{
-		dst_handle = ogps_CreateMatrixISO5436_2(dstFileName.c_str(), nullptr, document->Record1(), document->Record2().present() ? &*document->Record2() : nullptr, *document->Record3().MatrixDimension(), dstFormatIsBinary);
+		dst_handle = ogps_CreateMatrixISO5436_2(dstFileName.wstring().c_str(), nullptr, document->Record1(), document->Record2().present() ? &*document->Record2() : nullptr, *document->Record3().MatrixDimension(), dstFormatIsBinary);
 	}
 	else
 	{
-		dst_handle = ogps_CreateListISO5436_2(dstFileName.c_str(), nullptr, document->Record1(), document->Record2().present() ? &*document->Record2() : nullptr, static_cast<size_t>(*document->Record3().ListDimension()), dstFormatIsBinary);
+		dst_handle = ogps_CreateListISO5436_2(dstFileName.wstring().c_str(), nullptr, document->Record1(), document->Record2().present() ? &*document->Record2() : nullptr, static_cast<size_t>(*document->Record3().ListDimension()), dstFormatIsBinary);
 	}
 
 	if (dst_handle)
@@ -1384,56 +1383,33 @@ int main(int argc, char* argv[])
 	OpenGPS::Info::PrintCopyright();
 	OpenGPS::Info::PrintLicense();
 
-#ifdef _UNICODE
-	#ifdef _WIN32
-		OpenGPS::String path = argv[1];
-	#else
-		OpenGPS::String wpath;
-		wpath.FromChar(argv[1]);
-		OpenGPS::String path = wpath;
-	#endif
-#else
-	OpenGPS::String path = argv[1];
-#endif
-	OpenGPS::String tmp;
+	std::filesystem::path path = argv[1];
 
-	tmp = path; tmp += _T("ISO5436-sample1.x3p");
-	readonlyExample(tmp);
+	readonlyExample(path / "ISO5436-sample1.x3p");
 
-	tmp = path; tmp += _T("ISO5436-sample4_bin.x3p");
-	readonlyExample2(tmp);
+	readonlyExample2(path / "ISO5436-sample4_bin.x3p");
 
-	tmp = path; tmp += _T("ISO5436-sample3.x3p");
-	readonlyExample2(tmp);
+	readonlyExample2(path / "ISO5436-sample3.x3p");
 
-	tmp = path; tmp += _T("ISO5436-sample3.x3p");
-	readonlyExample3(tmp);
+	readonlyExample3(path / "ISO5436-sample3.x3p");
 
-	tmp = path; tmp += _T("ISO5436-sample2.x3p");
-	readonlyExample4(tmp);
+	readonlyExample4(path / "ISO5436-sample2.x3p");
 
-	tmp = path; tmp += _T("simple.x3p");
-	simpleExample(tmp);
+	simpleExample(path / "simple.x3p");
 
-	tmp = path; tmp += _T("medium.x3p");
-	mediumComplexExample(tmp);
+	mediumComplexExample(path / "medium.x3p");
 
-	tmp = path; tmp += _T("medium_invalid_points.x3p");
-	mediumComplexExampleWInvalid(tmp);
+	mediumComplexExampleWInvalid(path / "medium_invalid_points.x3p");
 
 	std::wcout << std::endl << "Starting performance tests..." << std::endl;
 
-	tmp = path; tmp += _T("performance_int16_bin.x3p");
-	performanceInt16(tmp, performanceCounter, true);
+	performanceInt16(path / "performance_int16_bin.x3p", performanceCounter, true);
 
-	tmp = path; tmp += _T("performance_int16.x3p");
-	performanceInt16(tmp, performanceCounter, false);
+	performanceInt16(path / "performance_int16.x3p", performanceCounter, false);
 
-	tmp = path; tmp += _T("performance_double_bin.x3p");
-	performanceDouble(tmp, performanceCounter, true);
+	performanceDouble(path / "performance_double_bin.x3p", performanceCounter, true);
 
-	tmp = path; tmp += _T("performance_double.x3p");
-	performanceDouble(tmp, performanceCounter, false);
+	performanceDouble(path / "performance_double.x3p", performanceCounter, false);
 
 	return 0;
 }

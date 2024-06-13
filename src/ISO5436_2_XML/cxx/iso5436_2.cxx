@@ -35,14 +35,14 @@
 
  /* Open. */
 ISO5436_2::ISO5436_2(
-	const String& file,
-	const String& temp)
-	:m_Instance{ std::make_shared<ISO5436_2Container>(file, temp) }
+	const std::filesystem::path& file,
+	const std::filesystem::path& temp)
+	:m_Instance{ std::make_shared<ISO5436_2Container>(file, temp)}
 {
 }
 
-ISO5436_2::ISO5436_2(const String& file)
-	:m_Instance{ std::make_shared<ISO5436_2Container>(file, _T("")) }
+ISO5436_2::ISO5436_2(const std::filesystem::path& file)
+	:m_Instance{ std::make_shared<ISO5436_2Container>(file, _T(""))}
 {
 }
 
@@ -177,12 +177,12 @@ void ISO5436_2::Close()
 	m_Instance->Close();
 }
 
-void ISO5436_2::AppendVendorSpecific(const String& vendorURI, const String& filePath)
+void ISO5436_2::AppendVendorSpecific(const String& vendorURI, const std::filesystem::path& filePath)
 {
 	m_Instance->AppendVendorSpecific(vendorURI, filePath);
 }
 
-bool ISO5436_2::GetVendorSpecific(const String& vendorURI, const String& fileName, const String& targetPath)
+bool ISO5436_2::GetVendorSpecific(const String& vendorURI, const std::filesystem::path& fileName, const std::filesystem::path& targetPath)
 {
-	return m_Instance->GetVendorSpecific(vendorURI, fileName, targetPath);
+	return m_Instance->GetVendorSpecific(vendorURI, fileName.c_str(), targetPath.c_str());
 }
