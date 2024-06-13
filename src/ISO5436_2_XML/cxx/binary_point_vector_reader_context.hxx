@@ -38,6 +38,7 @@
 
 #include "point_vector_reader_context.hxx"
 #include <memory>
+#include <filesystem>
 
 namespace OpenGPS
 {
@@ -58,7 +59,7 @@ namespace OpenGPS
 		 * Creates a new instance.
 		 * @param filePath Absolute path to the binary file streamed herein.
 		 */
-		BinaryPointVectorReaderContext(const String& filePath);
+		BinaryPointVectorReaderContext(const std::filesystem::path& filePath);
 
 		/*! Destroys this instance. */
 		~BinaryPointVectorReaderContext() override;
