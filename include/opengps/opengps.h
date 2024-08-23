@@ -128,9 +128,9 @@ typedef size_t OGPS_ULong;
 /*! Comprises text used to describe raised exceptions, that might be localized. */
 #define _EX_T(x) (x)
 
-/*! Gives the revision name of an ISO 5436-2 document.
+/*! Gives the revision name of an ISO25178-72:2017/DAM1 document.
     The xerces tool does not generate an appropriate enum value here. */
-#define OGPS_ISO5436_2000_REVISION_NAME _T("ISO5436 - 2000")
+#define OGPS_ISO5436_2000_REVISION_NAME _T("ISO25178-72:2017/DAM1")
 
 /*! Gives the name of the surface feature type in an ISO 5436-2 document.
     The xerces tool does not generate an appropriate enum value here. */
