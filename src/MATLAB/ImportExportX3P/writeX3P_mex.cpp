@@ -550,12 +550,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 
 	// TODO: Data type is allways double
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::D };
-	Record1Type::Axes_type::CX_type xaxis{ *xaxisType };
-	xaxis.DataType(xdataType);
-	if (xIncrement == 0)
-		xaxis.Increment(1.0);
-	else
-		xaxis.Increment(xIncrement);
+	double xIncrementOrDefault{ 1.0 };
+	if (xIncrement != 0.0)
+		xIncrementOrDefault = xIncrement;
+	Record1Type::Axes_type::CX_type xaxis{ *xaxisType, xdataType, xIncrementOrDefault };
 	// TODO: Offset should be set to -average of data min/max
 	if (bHasTranslation)
 		// Set translation to value specified in keyword argument
@@ -578,12 +576,10 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 
 	// TODO: Data type is allways double
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::D };
-	Record1Type::Axes_type::CY_type yaxis{ *yaxisType };
-	yaxis.DataType(ydataType);
-	if (yIncrement == 0)
-		yaxis.Increment(1.0);
-	else
-		yaxis.Increment(yIncrement);
+	double yIncrementOrDefault { 1.0 };
+	if (yIncrement != 0.0)
+		yIncrementOrDefault = yIncrement;
+	Record1Type::Axes_type::CY_type yaxis{ *yaxisType, ydataType, yIncrementOrDefault };
 
 	// TODO: Offset should be set to -average of data min/max
 	if (bHasTranslation)
@@ -600,9 +596,7 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 	// Setup z-axis, allways double absolute
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType{ Record1Type::Axes_type::CZ_type::AxisType_type::A };
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType{ Record1Type::Axes_type::CZ_type::DataType_type::D };
-	Record1Type::Axes_type::CZ_type zaxis{ zaxisType };
-	zaxis.DataType(zdataType);
-	zaxis.Increment(1.0);
+	Record1Type::Axes_type::CZ_type zaxis{ zaxisType, zdataType, 1.0 };
 	// TODO: Offset should be set to average of data min/max
 	if (bHasTranslation)
 		// Set translation to value specified in keyword argument
@@ -691,7 +685,8 @@ void mexFunction(int nlhs, mxArray* plhs[], int nrhs, const mxArray* prhs[])
 	Record2Type::ProbingSystem_type probingSystem{ type, id };
 
 	// Create Record2 from collected data
-	Record2Type record2{ *date, instrument, *calibrationDate, probingSystem };
+	Record2Type record2{ *date, instrument, probingSystem };
+	record2.CalibrationDate(*calibrationDate);
 
 	// Delete date records
 	date.reset();

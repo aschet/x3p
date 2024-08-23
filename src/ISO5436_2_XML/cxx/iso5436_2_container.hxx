@@ -514,13 +514,10 @@ namespace OpenGPS
 		/*! false, if the md5 checksum could not be verified after reading. */
 		bool m_ValidBinChecksum{ true };
 
-		/*! ID of vendorspecific data or empty. @see ISO5436_2Container::m_VendorSpecific. */
-		String m_VendorURI;
-
 		typedef std::vector<String> StringList;
 
-		/*! Vendorspecific file names to be added to the container registered with one single vendor id. @see ISO5436_2Container::m_VendorURI */
-		StringList m_VendorSpecific;
+		/*! Vendorspecific file names to be added to the container registered with multiple vendor ids. */
+		std::map<String, StringList> m_VendorSpecifics;
 
 		/*!
 		 * Writes vendorspecific files to the zip container if any.

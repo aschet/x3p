@@ -242,7 +242,10 @@ static bool PrintMetaData(const ISO5436_2Type* document)
 		<< "       Version: \"" << r2.Instrument().Version() << '"' << endl;
 
 	// Calibration
-	wcout << "Instrument was calibrated: \"" << r2.CalibrationDate() << endl;
+	if (r2.CalibrationDate().present())
+	{
+		wcout << "Instrument was calibrated: \"" << r2.CalibrationDate().get() << endl;
+	}
 
 	// Probing system type
 	wcout << "Probing system type: \"" << r2.ProbingSystem().Type() << '"' << endl
@@ -301,24 +304,17 @@ static void simpleExample(const OpenGPS::String& fileName)
 
 	Record1Type::Axes_type::CX_type::AxisType_type xaxisType{ Record1Type::Axes_type::CX_type::AxisType_type::I }; // incremental
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::D }; // double
-	Record1Type::Axes_type::CX_type xaxis{ xaxisType };
-	xaxis.DataType(xdataType);
-	xaxis.Increment(1.60123456789123456789E-0002);
+	Record1Type::Axes_type::CX_type xaxis{ xaxisType, xdataType, 1.60123456789123456789E-0002 };
 	xaxis.Offset(1.0123456789123456789e-1);
 
 	Record1Type::Axes_type::CY_type::AxisType_type yaxisType{ Record1Type::Axes_type::CY_type::AxisType_type::I }; // incremental
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::D }; // double
-	Record1Type::Axes_type::CY_type yaxis{ yaxisType };
-	yaxis.DataType(ydataType);
-	yaxis.Increment(1.60123456789123456789E-0002);
+	Record1Type::Axes_type::CY_type yaxis{ yaxisType, ydataType, 1.60123456789123456789E-0002 };
 	yaxis.Offset(0.0);
 
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType(Record1Type::Axes_type::CZ_type::AxisType_type::A); // absolute
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType(Record1Type::Axes_type::CZ_type::DataType_type::D); // double
-	Record1Type::Axes_type::CZ_type zaxis{ zaxisType };
-	zaxis.DataType(zdataType);
-	// Default value for absolute axis
-	zaxis.Increment(1);
+	Record1Type::Axes_type::CZ_type zaxis{ zaxisType, zdataType, 1 }; // Default value for absolute axis
 	zaxis.Offset(-1e-1);
 
 	Record1Type::Axes_type axis{ xaxis, yaxis, zaxis };
@@ -342,7 +338,8 @@ static void simpleExample(const OpenGPS::String& fileName)
 
 	Record2Type::Comment_type comment{ _T("This is a user comment specific to this dataset.") };
 
-	Record2Type record2{ date, instrument, calibrationDate, probingSystem };
+	Record2Type record2{ date, instrument, probingSystem };
+	record2.CalibrationDate(calibrationDate);
 	record2.Comment(comment);
 
 	// Create ISO5436_2 container
@@ -417,23 +414,18 @@ static void mediumComplexExample(const OpenGPS::String& fileName)
 
 	Record1Type::Axes_type::CX_type::AxisType_type xaxisType{ Record1Type::Axes_type::CX_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::L }; // int32
-	Record1Type::Axes_type::CX_type xaxis{ xaxisType };
+	Record1Type::Axes_type::CX_type xaxis{ xaxisType, xdataType, 10e-6 }; // 10 micro metre
 	xaxis.DataType(xdataType);
-	xaxis.Increment(10e-6); // 10 micro metre
 	xaxis.Offset(1000.0e-6); // 1 milli metre
 
 	Record1Type::Axes_type::CY_type::AxisType_type yaxisType{ Record1Type::Axes_type::CY_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::F }; // float
-	Record1Type::Axes_type::CX_type yaxis{ yaxisType };
-	yaxis.DataType(ydataType);
-	yaxis.Increment(1); // set to 1 for float and double axis
+	Record1Type::Axes_type::CX_type yaxis{ yaxisType, ydataType, 1 };
 	yaxis.Offset(-1000.0e-6); // -1 milli metre
 
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType{ Record1Type::Axes_type::CZ_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType{ Record1Type::Axes_type::CZ_type::DataType_type::D }; // double
-	Record1Type::Axes_type::CX_type zaxis{ zaxisType };
-	zaxis.DataType(zdataType);
-	zaxis.Increment(1); // set to 1 for float and double axis
+	Record1Type::Axes_type::CX_type zaxis{ zaxisType, zdataType, 1 };
 	zaxis.Offset(1000.0e-6); // 1 milli metre
 
 	Record1Type::Axes_type axis{ xaxis, yaxis, zaxis };
@@ -457,7 +449,8 @@ static void mediumComplexExample(const OpenGPS::String& fileName)
 
 	Record2Type::Comment_type comment{ _T("This is a user comment specific to this dataset.") };
 
-	Record2Type record2{ date, instrument, calibrationDate, probingSystem };
+	Record2Type record2{ date, instrument, probingSystem };
+	record2.CalibrationDate(calibrationDate);
 	record2.Comment(comment);
 
 	// Create ISO5436_2 container
@@ -527,23 +520,17 @@ static void mediumComplexExampleWInvalid(const OpenGPS::String& fileName)
 
 	Record1Type::Axes_type::CX_type::AxisType_type xaxisType{ Record1Type::Axes_type::CX_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::L }; // int32
-	Record1Type::Axes_type::CX_type xaxis{ xaxisType };
-	xaxis.DataType(xdataType);
-	xaxis.Increment(10e-6); // 10 micrometres
+	Record1Type::Axes_type::CX_type xaxis{ xaxisType, xdataType, 10e-6 }; // 10 micrometres
 	xaxis.Offset(1000.0e-6); // 1 millimetre
 
 	Record1Type::Axes_type::CY_type::AxisType_type yaxisType{ Record1Type::Axes_type::CY_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::F }; // float
-	Record1Type::Axes_type::CX_type yaxis{ yaxisType };
-	yaxis.DataType(ydataType);
-	yaxis.Increment(1); // set to 1 for float and double axis
+	Record1Type::Axes_type::CX_type yaxis{ yaxisType, ydataType, 1 };
 	yaxis.Offset(-1000.0e-6); // -1 milli metre
 
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType(Record1Type::Axes_type::CZ_type::AxisType_type::A); // absolute
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType(Record1Type::Axes_type::CZ_type::DataType_type::I); // 16 bit integer
-	Record1Type::Axes_type::CX_type zaxis{ zaxisType };
-	zaxis.DataType(zdataType);
-	zaxis.Increment(1e-6); // set to 1 for float and double axis
+	Record1Type::Axes_type::CX_type zaxis{ zaxisType, zdataType, 1e-6 };
 	zaxis.Offset(1000.0e-6); // 1 milli metre
 
 	Record1Type::Axes_type axis{ xaxis, yaxis, zaxis };
@@ -567,7 +554,8 @@ static void mediumComplexExampleWInvalid(const OpenGPS::String& fileName)
 
 	Record2Type::Comment_type comment{ _T("This is a user comment specific to this dataset.") };
 
-	Record2Type record2{ date, instrument, calibrationDate, probingSystem };
+	Record2Type record2{ date, instrument, probingSystem };
+	record2.CalibrationDate(calibrationDate);
 	record2.Comment(comment);
 
 	MatrixDimensionType matrix{ 4, 2, 2 };
@@ -764,13 +752,6 @@ static void readonlyExample2(const OpenGPS::String& fileName)
 
 	if (!handle)
 		return;
-
-#ifdef _DEBUG
-	auto document{ ogps_GetDocument(handle) };
-
-	// Z axis data type must be present (even if it is an incremental axis).
-	assert(document->Record1().Axes().CZ().DataType().present());
-#endif
 
 	PrintMetaData(handle);
 	PrintDimensions(handle);
@@ -1105,26 +1086,19 @@ static void performanceInt16(const OpenGPS::String& fileName, size_t dimension, 
 
 	Record1Type::Axes_type::CX_type::AxisType_type xaxisType{ Record1Type::Axes_type::CX_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::L }; // int32
-	Record1Type::Axes_type::CX_type xaxis{ xaxisType };
-	xaxis.DataType(xdataType);
 	// Increment and offset of x and y are needed to scale the integer values to metric coordinates
 	// The x axis is scaled in units of 10 micrometer
-	xaxis.Increment(10E-6);
+	Record1Type::Axes_type::CX_type xaxis{ xaxisType, xdataType, 10E-6 };
 	xaxis.Offset(0.0);
 
 	Record1Type::Axes_type::CY_type::AxisType_type yaxisType{ Record1Type::Axes_type::CY_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::I }; // int16
-	Record1Type::Axes_type::CY_type yaxis{ yaxisType };
-	yaxis.DataType(ydataType);
-	// The y axis is scaled in units of 10 micrometer
-	yaxis.Increment(10E-6);
+	Record1Type::Axes_type::CY_type yaxis{ yaxisType, ydataType, 10E-6 }; // The y axis is scaled in units of 10 micrometer
 	yaxis.Offset(0.0);
 
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType{ Record1Type::Axes_type::CZ_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType{ Record1Type::Axes_type::CZ_type::DataType_type::I }; // int16
-	Record1Type::Axes_type::CZ_type zaxis{ zaxisType };
-	zaxis.DataType(zdataType);
-	zaxis.Increment(1e-6);
+	Record1Type::Axes_type::CZ_type zaxis{ zaxisType, zdataType, 1e-6 };
 	zaxis.Offset(-32768e-6);
 	Record1Type::Axes_type axis{ xaxis, yaxis, zaxis };
 
@@ -1147,7 +1121,8 @@ static void performanceInt16(const OpenGPS::String& fileName, size_t dimension, 
 
 	Record2Type::Comment_type comment{ _T("This file is a list of points written as performance test in int16 precision.") };
 
-	Record2Type record2{ date, instrument, calibrationDate, probingSystem };
+	Record2Type record2{ date, instrument, probingSystem };
+	record2.CalibrationDate(calibrationDate);
 	record2.Comment(comment);
 
 	// Create ISO5436_2 container
@@ -1198,26 +1173,21 @@ static void performanceDouble(OpenGPS::String fileName, size_t dimension, bool b
 
 	Record1Type::Axes_type::CX_type::AxisType_type xaxisType{ Record1Type::Axes_type::CX_type::AxisType_type::I }; // incremental
 	Record1Type::Axes_type::CX_type::DataType_type xdataType{ Record1Type::Axes_type::CX_type::DataType_type::I }; // int16
-	Record1Type::Axes_type::CX_type xaxis{ xaxisType };
-	xaxis.DataType(xdataType);
 	// A profile is still 3D. so increment and offset of x and y have a meaning, but both are incremented from the same index!
 	// This example is a profile along x-axis
-	xaxis.Increment(10E-6);
+	Record1Type::Axes_type::CX_type xaxis{ xaxisType, xdataType, 10E-6 };
 	// Test very small numbers
 	xaxis.Offset(1.12345678912345678912345e-19);
 
 	Record1Type::Axes_type::CY_type::AxisType_type yaxisType{ Record1Type::Axes_type::CY_type::AxisType_type::I }; // incremental
 	Record1Type::Axes_type::CY_type::DataType_type ydataType{ Record1Type::Axes_type::CY_type::DataType_type::I }; // int16
-	Record1Type::Axes_type::CY_type yaxis{ yaxisType };
+	Record1Type::Axes_type::CY_type yaxis{ yaxisType, ydataType, 1 };
 	yaxis.DataType(ydataType);
-	// Increment defaults to 1.
-	yaxis.Increment(1);
 	yaxis.Offset(0.0);
 
 	Record1Type::Axes_type::CZ_type::AxisType_type zaxisType{ Record1Type::Axes_type::CZ_type::AxisType_type::A }; // absolute
 	Record1Type::Axes_type::CZ_type::DataType_type zdataType{ Record1Type::Axes_type::CZ_type::DataType_type::D }; // double
-	Record1Type::Axes_type::CZ_type zaxis(zaxisType);
-	zaxis.DataType(zdataType);
+	Record1Type::Axes_type::CZ_type zaxis{ zaxisType, zdataType, 1 };
 
 	Record1Type::Axes_type axis{ xaxis, yaxis, zaxis };
 
@@ -1240,7 +1210,8 @@ static void performanceDouble(OpenGPS::String fileName, size_t dimension, bool b
 
 	Record2Type::Comment_type comment{ _T("This file is a line profile written as performance test in double precision.") };
 
-	Record2Type record2{ date, instrument, calibrationDate, probingSystem };
+	Record2Type record2{ date, instrument, probingSystem };
+	record2.CalibrationDate(calibrationDate);
 	record2.Comment(comment);
 
 	// Set dimensions
