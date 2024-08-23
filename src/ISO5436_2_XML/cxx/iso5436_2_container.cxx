@@ -1744,24 +1744,21 @@ OGPS_DataPointType ISO5436_2Container::GetZaxisDataType() const
 
 OGPS_DataPointType ISO5436_2Container::GetAxisDataType(const Schemas::ISO5436_2::AxisDescriptionType& axis, const bool incremental) const
 {
-	if (axis.DataType().present())
+	if (!incremental || axis.AxisType() != Schemas::ISO5436_2::AxisType::I)
 	{
-		if (!incremental || axis.AxisType() != Schemas::ISO5436_2::AxisType::I)
+		switch (axis.DataType())
 		{
-			switch (axis.DataType().get())
-			{
-			case Schemas::ISO5436_2::DataType::I:
-				return OGPS_Int16PointType;
-			case Schemas::ISO5436_2::DataType::L:
-				return OGPS_Int32PointType;
-			case Schemas::ISO5436_2::DataType::F:
-				return OGPS_FloatPointType;
-			case Schemas::ISO5436_2::DataType::D:
-				return OGPS_DoublePointType;
-			default:
-				assert(false);
-				break;
-			}
+		case Schemas::ISO5436_2::DataType::I:
+			return OGPS_Int16PointType;
+		case Schemas::ISO5436_2::DataType::L:
+			return OGPS_Int32PointType;
+		case Schemas::ISO5436_2::DataType::F:
+			return OGPS_FloatPointType;
+		case Schemas::ISO5436_2::DataType::D:
+			return OGPS_DoublePointType;
+		default:
+			assert(false);
+			break;
 		}
 	}
 
@@ -1857,8 +1854,7 @@ void ISO5436_2Container::Reset()
 	m_ProxyContext.reset();
 	m_PointDataFileName.clear();
 	m_ValidPointsFileName.clear();
-	m_VendorURI.clear();
-	m_VendorSpecific.clear();
+	m_VendorSpecifics.clear();
 }
 
 bool ISO5436_2Container::HasDocument() const
@@ -1981,12 +1977,7 @@ double ISO5436_2Container::GetIncrementX() const
 	assert(HasDocument());
 
 	const auto& cx{ m_Document->Record1().Axes().CX() };
-	if (cx.Increment().present())
-	{
-		return cx.Increment().get();
-	}
-
-	return 1.0;
+	return cx.Increment();
 }
 
 double ISO5436_2Container::GetIncrementY() const
@@ -1994,12 +1985,7 @@ double ISO5436_2Container::GetIncrementY() const
 	assert(HasDocument());
 
 	const auto& cy{ m_Document->Record1().Axes().CY() };
-	if (cy.Increment().present())
-	{
-		return cy.Increment().get();
-	}
-
-	return 1.0;
+	return cy.Increment();
 }
 
 double ISO5436_2Container::GetOffsetX() const
@@ -2198,23 +2184,17 @@ void ISO5436_2Container::AppendVendorSpecific(const String& vendorURI, const Str
 	CheckDocumentInstance();
 
 	assert(vendorURI.size() > 0 && filePath.size() > 0);
-	assert(m_VendorURI.empty() || m_VendorSpecific.size() > 0);
 
-	if (!m_VendorURI.empty() && m_VendorURI != vendorURI)
+	auto it = m_VendorSpecifics.find(vendorURI);
+	if (it == m_VendorSpecifics.end())
 	{
-		throw Exception(
-			OGPS_ExInvalidOperation,
-			_EX_T("The vendor URI specified is inconsistent."),
-			_EX_T("The current vendor URI does not equal the vendor URI given by a previous call."),
-			_EX_T("OpenGPS::ISO5436_2Container::AppendVendorSpecific"));
+		StringList filePahts{ filePath };
+		m_VendorSpecifics.insert(std::make_pair(vendorURI, filePahts));
 	}
-
-	if (m_VendorURI.empty())
+	else
 	{
-		m_VendorURI = vendorURI;
+		it->second.push_back(filePath);
 	}
-
-	m_VendorSpecific.push_back(filePath);
 }
 
 bool ISO5436_2Container::GetVendorSpecific(const String& vendorURI, const String& fileName, const String& targetPath)
@@ -2239,22 +2219,23 @@ bool ISO5436_2Container::GetVendorSpecific(const String& vendorURI, const String
 			_EX_T("OpenGPS::ISO5436_2Container::GetVendorSpecific"));
 	}
 
-	if (m_Document->VendorSpecificID().present())
+	if (!m_Document->VendorSpecificID().empty())
 	{
-		if (m_Document->VendorSpecificID().get() == vendorURI)
+		auto it = std::find(m_Document->VendorSpecificID().begin(), m_Document->VendorSpecificID().end(), vendorURI);
+
+		if (it != m_Document->VendorSpecificID().end())
 		{
 			return Decompress(fileName, targetPath, true);
 		}
 		else
 		{
 			std::ostringstream msg;
-			msg << _EX_T("File vendor URI is \"") << m_Document->VendorSpecificID().get() << _EX_T("\"") << std::endl
-				<< _EX_T("Argument vendor URI is \"") << vendorURI << _EX_T("\"") << std::endl << std::ends;
+			msg << _EX_T("Argument vendor URI is \"") << vendorURI << _EX_T("\"") << std::endl << std::ends;
 			std::string msg1(msg.str());
 
 			throw Exception(
 				OGPS_ExWarning,
-				_EX_T("The argument vendorURI is not equal to the file vendor uri."),
+				_EX_T("The argument vendorURI is not equal to a file vendor uri."),
 				msg1.c_str(),
 				_EX_T("OpenGPS::ISO5436_2Container::GetVendorSpecific"));
 		}
@@ -2273,128 +2254,130 @@ bool ISO5436_2Container::WriteVendorSpecific(zipFile handle)
 {
 	bool success = true;
 
-	if (m_VendorURI.size() > 0 && m_VendorSpecific.size() > 0)
+	if (!m_VendorSpecifics.empty())
 	{
-		m_Document->VendorSpecificID(m_VendorURI);
+		m_Document->VendorSpecificID().clear();
 
-		for (size_t n = 0; n < m_VendorSpecific.size(); ++n)
+		for (const auto& vendorSpecific : m_VendorSpecifics)
 		{
-			// Creates new file in the zip container.
-			String vendor = m_VendorSpecific[n];
-			String avname = Environment::GetInstance()->GetFileName(vendor);
-			if (zipOpenNewFileInZip(handle,
-				avname.ToChar(),
-				nullptr,
-				nullptr,
-				0,
-				nullptr,
-				0,
-				nullptr,
-				Z_DEFLATED,
-				m_CompressionLevel) != ZIP_OK)
+			m_Document->VendorSpecificID().push_back(vendorSpecific.first);
+
+			for (const auto& vendorSpecificFile : vendorSpecific.second)
 			{
-				// zip file could not be created
-				success = false;
-			}
-			else
-			{
-				try
+				// Creates new file in the zip container.
+				String vendor = vendorSpecificFile;
+				String avname = Environment::GetInstance()->GetFileName(vendor);
+				if (zipOpenNewFileInZip(handle,
+					avname.ToChar(),
+					nullptr,
+					nullptr,
+					0,
+					nullptr,
+					0,
+					nullptr,
+					Z_DEFLATED,
+					m_CompressionLevel) != ZIP_OK)
 				{
-					ZipStreamBuffer vbuffer(handle, false);
-					ZipOutputStream vstream(vbuffer);
-
-					std::ifstream src(vendor.ToChar(), std::ios::in | std::ios::binary | std::ios::ate);
-
-					if (!src.is_open())
+					// zip file could not be created
+					success = false;
+				}
+				else
+				{
+					try
 					{
-						success = false;
-					}
-					else
-					{
-						// get length of file:
-						std::streampos length = src.tellg();
-						src.seekg(0, std::ios::beg);
+						ZipStreamBuffer vbuffer(handle, false);
+						ZipOutputStream vstream(vbuffer);
 
-						if (length < 0)
+						std::ifstream src(vendor.ToChar(), std::ios::in | std::ios::binary | std::ios::ate);
+
+						if (!src.is_open())
 						{
-							throw Exception(
-								OGPS_ExGeneral,
-								_EX_T("Could not write additional vendor specific data to the X3P archive."),
-								_EX_T("The size of the source file could not be determined."),
-								_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
+							success = false;
 						}
-
-						if (length > 0)
+						else
 						{
-							do
+							// get length of file:
+							std::streampos length = src.tellg();
+							src.seekg(0, std::ios::beg);
+
+							if (length < 0)
 							{
-								const size_t chunk = std::min(static_cast<size_t>(_OPENGPS_ZIP_CHUNK_MAX), static_cast<size_t>(length));
-								voidp buffer = (voidp)malloc(chunk);
+								throw Exception(
+									OGPS_ExGeneral,
+									_EX_T("Could not write additional vendor specific data to the X3P archive."),
+									_EX_T("The size of the source file could not be determined."),
+									_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
+							}
 
-								if (buffer)
+							if (length > 0)
+							{
+								do
 								{
-									try
-									{
-										src.read((char*)buffer, chunk);
+									const size_t chunk = std::min(static_cast<size_t>(_OPENGPS_ZIP_CHUNK_MAX), static_cast<size_t>(length));
+									voidp buffer = (voidp)malloc(chunk);
 
-										if (src.fail())
+									if (buffer)
+									{
+										try
 										{
-											if (!src.eof())
+											src.read((char*)buffer, chunk);
+
+											if (src.fail())
+											{
+												if (!src.eof())
+												{
+													throw Exception(
+														OGPS_ExGeneral,
+														_EX_T("Could not write additional vendor specific data to the X3P archive."),
+														_EX_T("The vendorspecific file to be added could not be read completely."),
+														_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
+												}
+											}
+
+											if (zipWriteInFileInZip(handle, (voidp)buffer, static_cast<unsigned int>(chunk)) != ZIP_OK)
 											{
 												throw Exception(
-													OGPS_ExGeneral,
+													OGPS_ExInvalidOperation,
 													_EX_T("Could not write additional vendor specific data to the X3P archive."),
-													_EX_T("The vendorspecific file to be added could not be read completely."),
+													_EX_T("Zlib could write all external data. Please check that there is enough space left on the device."),
 													_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
 											}
+											_OPENGPS_FREE(buffer);
 										}
-
-										if (zipWriteInFileInZip(handle, (voidp)buffer, static_cast<unsigned int>(chunk)) != ZIP_OK)
+										catch (...)
 										{
-											throw Exception(
-												OGPS_ExInvalidOperation,
-												_EX_T("Could not write additional vendor specific data to the X3P archive."),
-												_EX_T("Zlib could write all external data. Please check that there is enough space left on the device."),
-												_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
+											_OPENGPS_FREE(buffer);
+											throw;
 										}
-										_OPENGPS_FREE(buffer);
 									}
-									catch (...)
+									else
 									{
-										_OPENGPS_FREE(buffer);
-										throw;
+										throw Exception(
+											OGPS_ExGeneral,
+											_EX_T("Could not allocate memory via malloc."),
+											_EX_T("Verify that there is enough free virtual memory installed."),
+											_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
 									}
-								}
-								else
-								{
-									throw Exception(
-										OGPS_ExGeneral,
-										_EX_T("Could not allocate memory via malloc."),
-										_EX_T("Verify that there is enough free virtual memory installed."),
-										_EX_T("OpenGPS::ISO5436_2Container::WriteVendorSpecific"));
-								}
 
-								length -= chunk;
-							} while (!src.eof() && length > 0);
+									length -= chunk;
+								} while (!src.eof() && length > 0);
+							}
 						}
 					}
-				}
-				catch (...)
-				{
-					_VERIFY(zipCloseFileInZip(handle), ZIP_OK);
-					throw;
-				}
+					catch (...)
+					{
+						_VERIFY(zipCloseFileInZip(handle), ZIP_OK);
+						throw;
+					}
 
-				_VERIFY(zipCloseFileInZip(handle), ZIP_OK);
+					_VERIFY(zipCloseFileInZip(handle), ZIP_OK);
+				}
 			}
 		}
 	}
 	else
 	{
-		if (m_Document->VendorSpecificID().present())
-		{
-			m_Document->VendorSpecificID().reset();
-		}
+		m_Document->VendorSpecificID().clear();
 	}
 
 	return success;
