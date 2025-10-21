@@ -1,5 +1,7 @@
-.vscode
-/build
+.vscode/
+.vs/
+build/
+out/
 CMakeUserPresets.json
 CMakeLists.txt.user
 openGPS-*.*
