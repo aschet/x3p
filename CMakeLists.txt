@@ -1,14 +1,23 @@
-cmake_minimum_required(VERSION 3.21...3.28)
-project(openGPS VERSION 0.4.2)
+cmake_minimum_required(VERSION 3.21)
+project(openGPS VERSION 0.4.3)
 
-macro(set_warning_levels target)
-  if (MSVC)
-    target_compile_options(${target} PRIVATE /W4 /wd4251 /wd4275)
-    target_compile_definitions(${target} PRIVATE _CRT_NONSTDC_NO_DEPRECATE _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_WARNINGS)
-  else()
-    target_compile_options(${target} PRIVATE -Wall -Wextra -pedantic)
-  endif()
-endmacro()
+function(set_warning_levels target)
+  target_compile_definitions(${target}
+    PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:
+      _CRT_NONSTDC_NO_DEPRECATE
+      _CRT_SECURE_NO_DEPRECATE
+      _CRT_NONSTDC_NO_WARNINGS
+    >
+    $<$<PLATFORM_ID:Windows>:NOMINMAX>
+  )
+  target_compile_options(${target}
+    PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4251 /wd4275>
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:Clang>:-Wall -Wextra -Wpedantic>
+  )
+endfunction()
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(BUILD_DEMO "Build the demo application" OFF)
